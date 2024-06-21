@@ -24,9 +24,11 @@ from bop_toolkit_lib import visibility
 ################################################################################
 p = {
     # See dataset_params.py for options.
-    "dataset": "lm",
+    "dataset": "CNC-picking",
     # Dataset split. Options: 'train', 'val', 'test'.
-    "dataset_split": "test",
+    # "dataset_split": "test",
+    # "dataset_split": "eval",
+    "dataset_split": "real_d415",
     # Dataset split type. None = default. See dataset_params.py for options.
     "dataset_split_type": None,
     # Whether to save visualizations of visibility masks.
@@ -36,7 +38,8 @@ p = {
     # Type of the renderer.
     "renderer_type": "vispy",  # Options: 'vispy', 'cpp', 'python'.
     # Folder containing the BOP datasets.
-    "datasets_path": config.datasets_path,
+    "datasets_path": "/home/testbed/Projects/bop_toolkit/",
+    # "datasets_path": "/home/testbed/Projects/Proposal&Data,
     # Path template for output images with object masks.
     "vis_mask_visib_tpath": os.path.join(
         config.output_path,
@@ -48,6 +51,7 @@ p = {
         "{im_id:06d}_{gt_id:06d}.jpg",
     ),
 }
+# print(config.output_path)
 ################################################################################
 
 
@@ -63,6 +67,7 @@ model_type = None
 if p["dataset"] == "tless":
     model_type = "cad"
 dp_model = dataset_params.get_model_params(p["datasets_path"], p["dataset"], model_type)
+print(dp_model)
 
 # Initialize a renderer.
 misc.log("Initializing renderer...")
@@ -76,9 +81,12 @@ ren = renderer.create_renderer(ren_width, ren_height, p["renderer_type"], mode="
 for obj_id in dp_model["obj_ids"]:
     model_fpath = dp_model["model_tpath"].format(obj_id=obj_id)
     ren.add_object(obj_id, model_fpath)
-
+print(dp_split)
 scene_ids = dataset_params.get_present_scene_ids(dp_split)
+print(scene_ids) # Empty for now
 for scene_id in scene_ids:
+    if scene_id <260:
+        continue
     # Load scene info and ground-truth poses.
     scene_camera = inout.load_scene_camera(
         dp_split["scene_camera_tpath"].format(scene_id=scene_id)
@@ -104,7 +112,10 @@ for scene_id in scene_ids:
         if not os.path.exists(depth_fpath):
             depth_fpath = depth_fpath.replace(".tif", ".png")
         depth = inout.load_depth(depth_fpath)
-        depth *= scene_camera[im_id]["depth_scale"]  # Convert to [mm].
+
+        #NOTE: this is commented out because the CNC dataset did not provide the depth scale
+        # Anyway, the depth is really shitty, so probably the VSD metric will be really bad
+        # depth *= scene_camera[im_id]["depth_scale"]  # Convert to [mm].
 
         K = scene_camera[im_id]["cam_K"]
         fx, fy, cx, cy = K[0, 0], K[1, 1], K[0, 2], K[1, 2]
@@ -204,6 +215,9 @@ for scene_id in scene_ids:
                     im_id=im_id,
                     gt_id=gt_id,
                 )
+                # print(p["vis_mask_visib_tpath"])
+                # print(vis_path)
+                print(vis_path)
                 misc.ensure_dir(os.path.dirname(vis_path))
                 inout.save_im(vis_path, vis)
 

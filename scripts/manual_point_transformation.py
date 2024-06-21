@@ -1,4 +1,74 @@
-# Author: Anas Gouda (anas.gouda@tu-dortmund.de)
+"""Manual annotation tool for rough ground truth generation for BOP datasets"""
+
+import os
+import json 
+import copy
+import threading
+import glob
+
+import open3d as o3d
+import open3d.visualization.gui as gui
+import open3d.visualization.rendering as rendering
+
+import numpy as np
+import cv2
+import warnings
+
+dist = 0.002
+deg = 1
+class Dataset:
+    def __init__(self, dataset_path, dataset_split):
+        self.scenes_path = os.path.join(dataset_path, dataset_split)
+        self.objects_path = os.path.join(dataset_path, "models")
+
+
+class AnnotationScene:
+    def __init__(self, scene_point_cloud, scene_num, image_num):
+        self.annotation_scene = scene_point_cloud
+        self.scene_num = scene_num
+        self.image_num = image_num
+
+        self.obj_list = list()
+
+    def add_obj(self, obj_geometry, obj_name, obj_instance, transform=np.identity(4)):
+        self.obj_list.append(
+            self.SceneObject(obj_geometry, obj_name, obj_instance, transform)
+        )
+
+    def get_objects(self):
+        return self.obj_list[:]
+
+    def remove_obj(self, index):
+        self.obj_list.pop(index)
+
+    class SceneObject:
+        def __init__(self, obj_geometry, obj_name, obj_instance, transform):
+            self.obj_geometry = obj_geometry
+            self.obj_name = obj_name
+            self.obj_instance = obj_instance
+            self.transform = transform
+
+class Settings:
+    UNLIT = "defaultUnlit"
+
+    def __init__(self):
+        self.bg_color = gui.Color(1, 1, 1)
+        self.show_axes = False
+        self.highlight_obj = True
+
+        self.apply_material = True  # clear to False after processing
+
+        self.scene_material = rendering.MaterialRecord()
+        self.scene_material.base_color = [0.9, 0.9, 0.9, 1.0]
+        self.scene_material.shader = Settings.UNLIT
+
+        self.annotation_obj_material = rendering.MaterialRecord()
+        self.annotation_obj_material.base_color = [0.9, 0.3, 0.3, 1.0]
+        self.annotation_obj_material.shader = Settings.UNLIT
+
+
+
+    # Author: Anas Gouda (anas.gouda@tu-dortmund.de)
 # FLW, TU Dortmund, Germany
 
 """Manual annotation tool for datasets with BOP format
@@ -10,16 +80,6 @@ Other annotations can be generated usign other scripts [calc_gt_info.py, calc_gt
 original repo: https://github.com/FLW-TUDO/3d_annotation_tool
 
 """
-
-import glob
-import numpy as np
-import open3d as o3d
-import open3d.visualization.gui as gui
-import open3d.visualization.rendering as rendering
-import os
-import json
-import cv2
-import warnings
 
 # PARAMETERS.
 ################################################################################
@@ -33,7 +93,7 @@ p = {
     # scene number to open tool on
     "start_scene_num": 1,
     # image number inside scene to open tool on
-    "start_image_num": 25,
+    "start_image_num": 0,
 }
 ################################################################################
 
@@ -44,7 +104,7 @@ deg = 1
 class Dataset:
     def __init__(self, dataset_path, dataset_split):
         self.scenes_path = os.path.join(dataset_path, dataset_split)
-        self.objects_path = os.path.join(dataset_path, "models_sampled")
+        self.objects_path = os.path.join(dataset_path, "models")
 
 
 class AnnotationScene:
@@ -92,6 +152,30 @@ class Settings:
         self.annotation_obj_material.base_color = [0.9, 0.3, 0.3, 1.0]
         self.annotation_obj_material.shader = Settings.UNLIT
 
+class PointSelection:
+    def __init__(self, point_cloud):
+        app = gui.Application.instance
+        app.initialize()
+        # self.main_vis = o3d.visualization.VisualizerWithVertexSelection()
+
+        # self.main_vis = o3d.visualization.O3DVisualizer("title")
+
+        # app.add_window(self.main_vis)
+        
+ 
+        self.point_cloud = point_cloud
+        self.selected_points = []
+
+    def select_points(self):
+        self.main_vis.create_window()
+        self.main_vis.add_geometry(self.point_cloud)
+
+        self.main_vis.close()
+        self.selected_points = self.main_vis.get_picked_points()
+        return self.selected_points
+
+    def get_selected_points(self):
+        return self.selected_points
 
 class AppWindow:
     MENU_OPEN = 1
@@ -143,6 +227,13 @@ class AppWindow:
             "BOP manual annotation tool", width, height
         )
         w = self.window  # to make the code more concise
+
+
+
+
+        # self.vis = o3d.visualization.VisualizerWithEditing()
+        # self.vis.create_window()
+        # self.vis.run()
 
         # 3D widget
         self._scene = gui.SceneWidget()
@@ -274,6 +365,7 @@ class AppWindow:
 
         w.set_on_menu_item_activated(AppWindow.MENU_QUIT, self._on_menu_quit)
         w.set_on_menu_item_activated(AppWindow.MENU_ABOUT, self._on_menu_about)
+        # w.set_on_close(self._on_close)
         # ----
 
         # ---- annotation tool settings ----
@@ -287,6 +379,7 @@ class AppWindow:
         self._scene.set_on_key(self._transform)
 
         self._left_shift_modifier = False
+
 
     def _update_scene_numbers(self):
         self._scene_number.text = "Scene: " + f"{self._annotation_scene.scene_num:06}"
@@ -594,6 +687,112 @@ class AppWindow:
             count = max(indices) + 1
             # TODO change to fill the numbers missing in sequence
         return count
+    
+
+    @staticmethod
+    def _draw_registration_result(object, scene, transformation):
+        """Visualizes the transformed object in the scene
+
+        Args: 
+            object (open3d.geometry.PointCloud): object point cloud
+            scene (open3d.geometry.PointCloud): scene point cloud
+            transformation (np.ndarray): transformation matrix from object to scene
+        """        
+        vis_object = copy.deepcopy(object)
+        vis_object.paint_uniform_color([1, 0.706, 0])
+        vis_scene = copy.deepcopy(scene)
+
+        vis_object.transform(transformation)
+        o3d.visualization.draw_geometries([vis_object, vis_scene])
+        return
+    
+    def _select_points(self, pcd) :
+        """Selects points from the point cl
+        Args:
+            pcd (o3d.geometry.PointCloud): Pointcloud to select points from
+
+        Returns:
+            list[int]: list with indicies of selected points
+
+        """             
+        print("[INFO]: Please pick at least three correspondences")
+        print("[INFO]: Press [shift + left click] to add point picking")
+        print("[INFO]: Press [shift + right click] to undo point picking")
+        print("[INFO]: Close window once done by pressing [Q] or [Esc] key")
+
+        # HERE IS PROBLEM WITH EDITING VISUALIZER  IT CLOSES THE MAIN WINDOW 
+
+        # w = gui.Application.create_window("Open3D - pick points", 800, 600)
+        vis1 = o3d.visualization.VisualizerWithEditing()
+        vis1.create_window()
+        vis1.add_geometry(pcd)
+        vis1.run()
+        vis1.destroy_window()
+
+        return vis1.get_picked_points()
+
+        # w = gui.Application.instance.create_window("Open3D - pick points", 800, 600)
+
+        # vis = o3d.visualization.O3DVisualizer(pcd, w.renderer)
+        # vis.create_window()
+        # vis.run()
+        # vis.destroy_window()
+
+        
+        # return vis.get_picked_points()
+    
+
+        # vis_p = o3d.visualization.VisualizerWithEditing()
+        # vis_p.create_window()
+        # vis_p.add_geometry(pcd)
+
+        # # o3d.visualization.gui.Application.instance.add_window(vis_p)
+        # vis_p.run()  # user picks points
+        # vis_p.destroy_window()
+        # return vis_p.get_picked_points()
+
+    
+    def _transform_from_manual_points(self, object_geometry, scene_geometry) -> np.ndarray:
+        print(type(object_geometry))
+        print(type(scene_geometry))
+        """Returns a transformation matrix from the manualy selected points of the object and the scene
+        
+
+        Args:
+            object_geometry (_type_): point cloud of the object
+            scene_geometry (_type_): point cloud of the scene
+
+        Returns:
+            np.ndarray: transformation matrix from the object to the scene 4x4 
+        """ 
+        transf_init = np.eye(4)
+        # debug = True
+        # if debug:
+        #     self._draw_registration_result(object_geometry, scene_geometry, transf_init)
+        enough_points = False
+        while not enough_points:
+            points_object = self._select_points(object_geometry)
+            points_scene = self._select_points(scene_geometry)
+            enough_points = len(points_object) == len(points_scene) and len(points_object) >=3
+            if not enough_points:
+                print("Not enough points selected, please select the same number of points in the object and scene")
+            # enough_points = True
+
+        corrseps =  np.zeros((len(points_object), 2))
+        corrseps[:, 0] = points_object
+        corrseps[:, 1] = points_scene
+
+        p2p = o3d.pipelines.registration.TransformationEstimationPointToPoint()
+        transf_init = p2p.compute_transformation(
+            object_geometry, scene_geometry, o3d.utility.Vector2iVector(corrseps)
+        )
+
+        debug = False
+        # if debug:
+        #     self._draw_registration_result(object_geometry, scene_geometry, transf_init)
+
+        return transf_init
+
 
     def _add_mesh(self):
         meshes = self._annotation_scene.get_objects()
@@ -609,9 +808,14 @@ class AppWindow:
             np.array(object_geometry.points) / 1000
         )  # convert mm to meter
         init_trans = np.identity(4)
+
         center = self._annotation_scene.annotation_scene.get_center()
         center[2] -= 0.2
         init_trans[0:3, 3] = center
+
+        init_trans = self._transform_from_manual_points(object_geometry, self._annotation_scene.annotation_scene)
+
+
         object_geometry.transform(init_trans)
         new_mesh_instance = self._obj_instance_count(
             self._meshes_available.selected_value, meshes
@@ -634,6 +838,8 @@ class AppWindow:
         meshes = [i.obj_name for i in meshes]
         self._meshes_used.set_items(meshes)
         self._meshes_used.selected_index = len(meshes) - 1
+
+        # print("HERE")
 
     def _remove_mesh(self):
         if not self._annotation_scene.get_objects():
@@ -753,7 +959,7 @@ class AppWindow:
                     obj_name = model_name + "_" + str(obj_instance)
                     translation = (
                         np.array(np.array(obj["cam_t_m2c"]), dtype=np.float64) / 1000
-                    )  # convert to meterq
+                    )  # convert to meter
                     orientation = np.array(np.array(obj["cam_R_m2c"]), dtype=np.float64)
                     transform = np.concatenate(
                         (orientation.reshape((3, 3)), translation.reshape(3, 1)), axis=1
@@ -771,6 +977,8 @@ class AppWindow:
                     # print(type(center))
                     # print(center)
                     center = transform_cam_to_obj[0:3, 3]
+                    # print(center)
+
 
                     obj_geometry.rotate(transform_cam_to_obj[0:3, 0:3], center=center)
                     self._scene.scene.add_geometry(

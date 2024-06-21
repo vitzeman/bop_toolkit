@@ -570,6 +570,9 @@ def load_ply(path):
         ]
         if is_binary:
             for prop in pt_props:
+                if prop[1] == "uint":
+                    ind, _ = prop
+                    prop = (ind, "int")
                 format = formats[prop[1]]
                 read_data = f.read(format[1])
                 val = struct.unpack(format[0], read_data)[0]
@@ -604,6 +607,9 @@ def load_ply(path):
         prop_vals = {}
         if is_binary:
             for prop in face_props:
+                if prop[1] == "uint":
+                    ind, _ = prop
+                    prop = (ind, "int")
                 format = formats[prop[1]]
                 val = struct.unpack(format[0], f.read(format[1]))[0]
                 if prop[0] == "n_corners":

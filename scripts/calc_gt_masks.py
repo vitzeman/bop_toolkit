@@ -18,9 +18,12 @@ from bop_toolkit_lib import visibility
 ################################################################################
 p = {
     # See dataset_params.py for options.
-    "dataset": "lm",
+    "dataset": "CNC-picking",
+    # "dataset": "lm",
     # Dataset split. Options: 'train', 'val', 'test'.
-    "dataset_split": "test",
+    # "dataset_split": "test",
+    # "dataset_split": "eval",
+    "dataset_split": "real_d415",
     # Dataset split type. None = default. See dataset_params.py for options.
     "dataset_split_type": None,
     # Tolerance used in the visibility test [mm].
@@ -28,7 +31,7 @@ p = {
     # Type of the renderer.
     "renderer_type": "vispy",  # Options: 'vispy', 'cpp', 'python'.
     # Folder containing the BOP datasets.
-    "datasets_path": config.datasets_path,
+     "datasets_path": "/home/testbed/Projects/bop_toolkit/",
 }
 ################################################################################
 
@@ -94,7 +97,9 @@ for scene_id in scene_ids:
         # Load depth image.
         depth_path = dp_split["depth_tpath"].format(scene_id=scene_id, im_id=im_id)
         depth_im = inout.load_depth(depth_path)
-        depth_im *= scene_camera[im_id]["depth_scale"]  # to [mm]
+        #NOTE: this is commented out because the CNC dataset did not provide the depth scale
+        # Anyway, the depth is really shitty, so probably the VSD metric will be really bad
+        # depth_im *= scene_camera[im_id]["depth_scale"]  # to [mm]
         dist_im = misc.depth_im_to_dist_im_fast(depth_im, K)
 
         for gt_id, gt in enumerate(scene_gt[im_id]):

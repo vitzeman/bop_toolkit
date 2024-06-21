@@ -8,28 +8,36 @@ import os
 
 ######## Basic ########
 
+RESULT_FILENAMES = [
+    # "mesh_clearGrasp-test.csv"
+    # "ngp_clearGrasp-test.csv"
+    # "foundationposepartial_CNCpicking-test.csv"
+    "foundationPose_CNCpicking-test.csv"
+]
+
 # Folder with the BOP datasets.
 if "BOP_PATH" in os.environ:
     datasets_path = os.environ["BOP_PATH"]
 else:
-    datasets_path = r"/path/to/bop/datasets"
+    datasets_path = r"/home/testbed/Projects/bop_toolkit"
 
 # Folder with pose results to be evaluated.
-results_path = r"/path/to/folder/with/results"
+# results_path = r"/path/to/folder/with/results"
+# results_path = r"/home/testbed/Projects/bop_toolkit/clearGrasp/results_csv"
+results_path = r"/home/testbed/Projects/bop_toolkit/CNCpicking/results"
 
 # Folder for the calculated pose errors and performance scores.
-eval_path = r"/path/to/eval/folder"
+# eval_path = r"/path/to/eval/folder"
+# eval_path = r"/home/testbed/Projects/bop_toolkit/clearGrasp/results_metrics"
+eval_path = r"/home/testbed/Projects/bop_toolkit/CNCpicking/result_metrics"
 
 ######## Extended ########
 
 # Folder for outputs (e.g. visualizations).
-output_path = r"/path/to/output/folder"
+output_path = r"/home/testbed/Projects/bop_toolkit"
 
 # For offscreen C++ rendering: Path to the build folder of bop_renderer (github.com/thodan/bop_renderer).
 bop_renderer_path = r"/path/to/bop_renderer/build"
 
 # Executable of the MeshLab server.
 meshlab_server_path = r"/path/to/meshlabserver.exe"
-
-# Number of workers for the parallel evaluation of pose errors.
-num_workers = 10
