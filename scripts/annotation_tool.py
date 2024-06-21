@@ -25,15 +25,15 @@ import warnings
 ################################################################################
 p = {
     # Folder containing the BOP datasets.
-    "dataset_path": "/home/testbed/Projects/bop_toolkit/clearGrasp",
+    "dataset_path": "/home/vit/CIIRC/bop_toolkit/clearpose_downsample_100_bop",
     # Dataset split. Options: 'train', 'test'.
-    "dataset_split": "eval",
+    "dataset_split": "test",
     # Dataset split type. Options: 'synt', 'real', None = default. See dataset_params.py for options.
     "dataset_split_type": None,
     # scene number to open tool on
-    "start_scene_num": 1,
+    "start_scene_num": 1001,
     # image number inside scene to open tool on
-    "start_image_num": 25,
+    "start_image_num": 0,
 }
 ################################################################################
 
@@ -44,7 +44,7 @@ deg = 1
 class Dataset:
     def __init__(self, dataset_path, dataset_split):
         self.scenes_path = os.path.join(dataset_path, dataset_split)
-        self.objects_path = os.path.join(dataset_path, "models_sampled")
+        self.objects_path = os.path.join(dataset_path, "models")
 
 
 class AnnotationScene:
@@ -187,7 +187,7 @@ class AppWindow:
         annotation_objects = gui.CollapsableVert(
             "Annotation Objects", 0.33 * em, gui.Margins(em, 0, 0, 0)
         )
-        annotation_objects.set_is_open(True)
+        annotation_objects.set_is_open(False)
         self._meshes_available = gui.ListView()
         # mesh_available.set_items(["bottle", "can"])
         self._meshes_used = gui.ListView()
@@ -212,7 +212,7 @@ class AppWindow:
 
         self._pre_image_button = gui.Button("Previous")
         self._pre_image_button.horizontal_padding_em = 0.8
-        self._pre_image_button.vertical_padding_em = 0
+        self._pre_image_button.vertical_padding_em  = 0
         self._pre_image_button.set_on_clicked(self._on_previous_image)
         self._next_image_button = gui.Button("Next")
         self._next_image_button.horizontal_padding_em = 0.8
