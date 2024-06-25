@@ -88,7 +88,7 @@ p = {
     # File with a list of estimation targets to consider. The file is assumed to
     # be stored in the dataset folder.
     # "targets_filename": "/home/testbed/Projects/bop_toolkit/clearGrasp/test_targets_bop19.json",
-    "targets_filename": "/home/testbed/Projects/bop_toolkit/CNCpicking/test_targets_bop19.json",
+    "targets_filename": "/home/zemanvit/Projects/megapose6d/CNCpicking/test_targets_bop19.json",
 }
 ################################################################################
 

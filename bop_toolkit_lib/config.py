@@ -12,24 +12,24 @@ RESULT_FILENAMES = [
     # "mesh_clearGrasp-test.csv"
     # "ngp_clearGrasp-test.csv"
     # "foundationposepartial_CNCpicking-test.csv"
-    "foundationPose_CNCpicking-test.csv"
+    "Megapose_CNCpicking-test.csv"
 ]
 
 # Folder with the BOP datasets.
 if "BOP_PATH" in os.environ:
     datasets_path = os.environ["BOP_PATH"]
 else:
-    datasets_path = r"/home/testbed/Projects/bop_toolkit"
+    datasets_path = r"/home/zemanvit/Projects/megapose6d"
 
 # Folder with pose results to be evaluated.
 # results_path = r"/path/to/folder/with/results"
 # results_path = r"/home/testbed/Projects/bop_toolkit/clearGrasp/results_csv"
-results_path = r"/home/testbed/Projects/bop_toolkit/CNCpicking/results"
+results_path = r"/home/zemanvit/Projects/megapose6d/CNCpicking/results"
 
 # Folder for the calculated pose errors and performance scores.
 # eval_path = r"/path/to/eval/folder"
 # eval_path = r"/home/testbed/Projects/bop_toolkit/clearGrasp/results_metrics"
-eval_path = r"/home/testbed/Projects/bop_toolkit/CNCpicking/result_metrics"
+eval_path = r"/home/zemanvit/Projects/megapose6d/CNCpicking/results_metrics"
 
 ######## Extended ########
 

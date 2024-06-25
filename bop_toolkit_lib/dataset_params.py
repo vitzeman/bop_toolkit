@@ -108,8 +108,8 @@ def get_model_params(datasets_path, dataset_name, model_type=None):
         "ycbv": [1, 13, 14, 16, 18, 19, 20, 21],
         "hope": None,  # Not defined yet.
         "clearGrasp": [1,2,3,4,5,6,7,8,9],
-        "CNC-picking": list(range(1,5)),
-        "CNCpicking": list(range(1,5))
+        "CNC-picking": list(range(1,7)),
+        "CNCpicking": list(range(1,7))
     }[dataset_name]
 
     # T-LESS includes two types of object models, CAD and reconstructed.
