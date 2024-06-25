@@ -32,3 +32,9 @@ In [eval_bop19_pose.py](scripts/eval_bop19_pose.py) setup:
   - `targets_filename` path to evaluation targets
 
 # Running the scripts
+After filling in previous data and adding  the csv files and path to them run [eval_bop19_pose.py](scripts/eval_bop19_pose.py).
+
+```python
+mamba activate bop
+python scripts/eval_bop19_pose.py 
+```
